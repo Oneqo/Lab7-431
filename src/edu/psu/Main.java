@@ -27,37 +27,73 @@ public class Main {
 
     private static String getInterfaceSkeleton(Class source) {
         StringBuilder skeleton = new StringBuilder();
+
+        //Add type header
+        appendClassHeader(source, skeleton, "interface ");
+        //Add parent interfaces
+        Class[] interfaces = source.getInterfaces();
+        appendInterfaces(skeleton, interfaces, " extends ");
+
+        //Open body
+        skeleton.append("{\n");
+
+        //Add fields
+        Field[] fields = source.getDeclaredFields();
+        appendFields(skeleton, fields);
+        //Add methods
+        Method[] methods = source.getDeclaredMethods();
+        appendMethods(skeleton, methods);
+
+        //Close body
+        skeleton.append('}');
+
+        return skeleton.toString();
+    }
+
+    private static String getClassSkeleton(Class source) throws ClassNotFoundException {
+        StringBuilder skeleton = new StringBuilder();
+
+        //Add type header
+        appendClassHeader(source, skeleton, "class ");
+
+        //Get superclass & interfaces
+        Class superClass = source.getSuperclass();
+        Class[] interfaces = source.getInterfaces();
+        //Add superclass (if present) | Object is ignored since every class is a subclass of Object.
+        if(superClass.getName() != Class.forName("java.lang.Object").getName()){
+            skeleton.append(" extends ");
+            skeleton.append(parseClassName(superClass.getName()));
+        }
+        //Add declared interfaces
+        appendInterfaces(skeleton, interfaces, " implements ");
+
+        //Open body
+        skeleton.append("{\n");
+
+        //Add member fields
+        Field[] fields = source.getDeclaredFields();
+        appendFields(skeleton, fields);
+        //Add constructors
+        Constructor[] constructors = source.getDeclaredConstructors();
+        apppendConstructors(skeleton, constructors);
+        //Add member functions
+        Method[] methods = source.getDeclaredMethods();
+        appendMethods(skeleton, methods);
+
+        //Close body
+        skeleton.append('}');
+
+        return skeleton.toString();
+    }
+
+    private static void appendClassHeader(Class source, StringBuilder skeleton, String type) {
         className = parseClassName(source.getName());
         String modifiers = Modifier.toString(source.getModifiers());
         skeleton.append(modifiers);
-        if(!modifiers.isEmpty())
+        if (!modifiers.isEmpty())
             skeleton.append(' ');
-        skeleton.append("interface ");
+        skeleton.append(type);
         skeleton.append(className);
-
-        //Get all interfaces
-        Class[] interfaces = source.getInterfaces();
-
-        //Interfaces
-        if(interfaces.length > 0){
-            skeleton.append(" extends ");
-            for (Class i : interfaces) {
-                skeleton.append(parseClassName(i.getName()));
-                skeleton.append(',');
-            }
-            skeleton.deleteCharAt(skeleton.length()-1);
-        }
-        skeleton.append("{\n");
-
-        //Fields
-        Field[] fields = source.getDeclaredFields();
-        appendFields(skeleton, fields);
-
-        //Methods
-        Method[] methods = source.getDeclaredMethods();
-        appendMethods(skeleton, methods);
-        skeleton.append('}');
-        return skeleton.toString();
     }
 
     private static void appendMethods(StringBuilder skeleton, Method[] methods) {
@@ -77,43 +113,7 @@ public class Main {
         }
     }
 
-    private static String getClassSkeleton(Class source) throws ClassNotFoundException {
-        StringBuilder skeleton = new StringBuilder();
-        className = parseClassName(source.getName());
-        String modifiers = Modifier.toString(source.getModifiers());
-        skeleton.append(modifiers);
-        if(!modifiers.isEmpty())
-            skeleton.append(' ');
-        skeleton.append("class ");
-        skeleton.append(className);
-
-        //Get superclass & interfaces
-        Class superClass = source.getSuperclass();
-        Class[] interfaces = source.getInterfaces();
-
-        //Superclass
-        if(superClass.getName() != Class.forName("java.lang.Object").getName()){
-            skeleton.append(" extends ");
-            skeleton.append(parseClassName(superClass.getName()));
-        }
-
-        //Interfaces
-        if(interfaces.length > 0){
-            skeleton.append(" implements ");
-            for (Class i : interfaces) {
-                skeleton.append(parseClassName(i.getName()));
-                skeleton.append(',');
-            }
-            skeleton.deleteCharAt(skeleton.length()-1);
-        }
-        skeleton.append("{\n");
-
-        //Fields
-        Field[] fields = source.getDeclaredFields();
-        appendFields(skeleton, fields);
-
-        //Constructors
-        Constructor[] constructors = source.getDeclaredConstructors();
+    private static void apppendConstructors(StringBuilder skeleton, Constructor[] constructors) {
         if(constructors.length > 0){
             Arrays.sort(constructors, (Constructor c1, Constructor c2) -> {return -1*c1.toString().compareTo(c2.toString());});
             skeleton.append("\\\\Constructors:\n");
@@ -125,12 +125,17 @@ public class Main {
                 skeleton.append(";\n");
             }
         }
+    }
 
-        //Methods
-        Method[] methods = source.getDeclaredMethods();
-        appendMethods(skeleton, methods);
-        skeleton.append('}');
-        return skeleton.toString();
+    private static void appendInterfaces(StringBuilder skeleton, Class[] interfaces, String msg) {
+        if (interfaces.length > 0) {
+            skeleton.append(msg);
+            for (Class i : interfaces) {
+                skeleton.append(parseClassName(i.getName()));
+                skeleton.append(',');
+            }
+            skeleton.deleteCharAt(skeleton.length() - 1);
+        }
     }
 
     private static void appendFields(StringBuilder skeleton, Field[] fields) {
