@@ -166,7 +166,11 @@ public class myJavap {
     }
 
     private static String parseClassName(String name) {
-        return name.substring(name.lastIndexOf('.') + 1,name.length());
+        if(name.lastIndexOf('.') == -1) //if a class is part of the default package, it doesn't have a prefix
+            return name;
+        else{
+            return name.substring(name.lastIndexOf('.') + 1,name.length());
+        }
     }
 
     private static String getModifiers(Member obj){
