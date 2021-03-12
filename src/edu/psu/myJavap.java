@@ -3,7 +3,7 @@ package edu.psu;
 import java.lang.reflect.*;
 import java.util.Arrays;
 
-public class Main {
+public class myJavap {
 
     private static String className;
 
